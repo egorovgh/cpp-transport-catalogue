@@ -10,16 +10,13 @@ namespace transport_catalogue
     {
         Bus bus;
         bus.name = route_name;
-        bus.numStops = stops_.size();
-        bus.routeLength = CalculateRouteLenght(stops_);
-        bus.numUniqueStops = CalculateUniqueStops(stops_);
         for (const auto& stop_name : stops_) {
             bus.stops.push_back(FindStop(stop_name));
         }
         AddBus(std::move(bus));
     }
 
-    void TransportCatalogue::AddBus(Bus bus) noexcept
+    void TransportCatalogue::AddBus(Bus&& bus) noexcept
     {
         buses_.push_back(std::move(bus));
         std::string_view route_name = buses_.back().name;
@@ -30,18 +27,18 @@ namespace transport_catalogue
         }
     }
 
-    int TransportCatalogue::CalculateUniqueStops(const std::vector<std::string_view>& stops_)
+    int TransportCatalogue::CalculateUniqueStops(const std::vector<const Stop*>& stops_) const
     {
         std::unordered_set<std::string_view> unique_stops;
         for (const auto& stop : stops_)
         {
-            unique_stops.insert(stop);
+            unique_stops.insert(stop->name);
         }
 
         return static_cast<int> (unique_stops.size());
     }
 
-    double TransportCatalogue::CalculateRouteLenght(const std::vector<std::string_view>& stops_)
+    double TransportCatalogue::CalculateRouteLength(const std::vector<const Stop*>& stops_) const
     {
         double result = 0.0;
         if (stops_.size() < 2) {
@@ -49,8 +46,8 @@ namespace transport_catalogue
         }
 
         for (size_t i = 0; i < stops_.size() - 1; ++i) {
-            auto stop1 = FindStop(stops_[i]);
-            auto stop2 = FindStop(stops_[i + 1]);
+            auto stop1 = stops_[i];
+            auto stop2 = stops_[i + 1];
             result += geo::ComputeDistance(stop1->coods, stop2->coods);
         }
         return result;
@@ -61,33 +58,38 @@ namespace transport_catalogue
         Stop stop;
         stop.name = stop_name;
         stop.coods = coordinate;
-        AddStop(stop);
+        AddStop(std::move(stop));
     }
 
-    void TransportCatalogue::AddStop(Stop stop) noexcept {
+    void TransportCatalogue::AddStop(Stop&& stop) noexcept {
         stops_.push_back(std::move(stop));
         stops_by_name_.insert({ stops_.back().name, &stops_.back() });
     }
 
 
-    const Bus* TransportCatalogue::GetBusInfo(const std::string_view& bus_name) const
+    const BusInfo TransportCatalogue::GetBusInfo(const std::string_view& bus_name) const
     {
-        auto result = FindBus(bus_name);
+        BusInfo result;
+        auto bus = FindBus(bus_name);
+        result.name = bus->name;
+        result.numStops = bus->stops.size();
+        result.routeLength = CalculateRouteLength(bus->stops);
+        result.numUniqueStops = CalculateUniqueStops(bus->stops);
         return result;
     }
 
-    const Stop* TransportCatalogue::FindStop(const std::string_view& stop_name) const
+    const Stop* TransportCatalogue::FindStop(const std::string_view& stop_name) const noexcept
     {
         if (stops_by_name_.count(stop_name) == 0) {
-            throw std::out_of_range("Stop " + std::string(stop_name) + " does not exist in catalogue");
+            return nullptr;
         }
         return stops_by_name_.at(stop_name);
     }
 
-    const Bus* TransportCatalogue::FindBus(const std::string_view& bus_name) const
+    const Bus* TransportCatalogue::FindBus(const std::string_view& bus_name) const noexcept
     {
         if (buses_by_names_.count(bus_name) == 0) {
-            throw std::out_of_range("Bus " + std::string(bus_name) + " does not exist in catalogue");
+            return nullptr;
         }
         auto result = buses_by_names_.at(bus_name);
         return result;

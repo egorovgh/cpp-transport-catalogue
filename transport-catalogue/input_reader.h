@@ -2,15 +2,13 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <iostream>
 
 #include "geo.h"
 #include "transport_catalogue.h"
 
-
-namespace transport_catalogue
-{
-    namespace input_handler
-    {
+namespace transport_catalogue {
+    namespace input_handler {
         struct CommandDescription {
             // Определяет, задана ли команда (поле command непустое)
             explicit operator bool() const {
@@ -29,6 +27,11 @@ namespace transport_catalogue
         class InputReader {
         public:
             /**
+             * Читает количество базовых запросов и сами запросы из стандартного ввода
+             */
+            void ReadInput(std::istream& input, int base_request_count);
+
+            /**
              * Парсит строку в структуру CommandDescription и сохраняет результат в commands_
              */
             void ParseLine(std::string_view line);
@@ -41,5 +44,5 @@ namespace transport_catalogue
         private:
             std::vector<CommandDescription> commands_;
         };
-    } 
+    }
 }

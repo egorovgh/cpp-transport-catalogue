@@ -1,8 +1,8 @@
-#include "input_reader.h"
+#include "input_reader.h" 
 
-#include <algorithm>
-#include <cassert>
-#include <iterator>
+#include <algorithm> 
+#include <cassert> 
+#include <iterator> 
 
 
 namespace transport_catalogue
@@ -10,8 +10,8 @@ namespace transport_catalogue
     namespace input_handler
     {
         /**
- * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
- */
+         * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
+        */
         geo::Coordinates ParseCoordinates(std::string_view str) {
             static const double nan = std::nan("");
 
@@ -100,6 +100,16 @@ namespace transport_catalogue
                     std::string(line.substr(colon_pos + 1)) };
         }
 
+        void InputReader::ReadInput(std::istream& input, int base_request_count) {
+
+
+            for (int i = 0; i < base_request_count; ++i) {
+                std::string line;
+                std::getline(input, line);
+                ParseLine(line);
+            }
+        }
+
         void InputReader::ParseLine(std::string_view line) {
             auto command_description = ParseCommandDescription(line);
             if (command_description) {
@@ -108,7 +118,7 @@ namespace transport_catalogue
         }
 
         void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) const {
-            // Реализуйте метод самостоятельно
+            // Реализуйте метод самостоятельно 
             for (const CommandDescription& command : commands_)
             {
                 if (!command)
