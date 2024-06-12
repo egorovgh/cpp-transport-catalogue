@@ -29,7 +29,7 @@ namespace transport_catalogue {
             /**
              * Читает количество базовых запросов и сами запросы из стандартного ввода
              */
-            void ReadInput(std::istream& input, int base_request_count);
+            void ReadInput(std::istream& input);
 
             /**
              * Парсит строку в структуру CommandDescription и сохраняет результат в commands_
@@ -40,6 +40,8 @@ namespace transport_catalogue {
              * Наполняет данными транспортный справочник, используя команды из commands_
              */
             void ApplyCommands(TransportCatalogue& catalogue) const;
+
+            std::pair<geo::Coordinates, std::unordered_map<std::string, int>> ParseCoordinatesAndDistances(const std::string& description) const;
 
         private:
             std::vector<CommandDescription> commands_;

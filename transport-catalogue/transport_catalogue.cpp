@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <unordered_set>
 
+
 namespace transport_catalogue
 {
     void TransportCatalogue::AddBus(const std::string& route_name, const std::vector<std::string_view>& stops_)
@@ -38,19 +39,22 @@ namespace transport_catalogue
         return static_cast<int> (unique_stops.size());
     }
 
-    double TransportCatalogue::CalculateRouteLength(const std::vector<const Stop*>& stops_) const
+    std::pair<double, double> TransportCatalogue::CalculateGeoAndRealRouteLength(const std::vector<const Stop*>& stops_) const
     {
-        double result = 0.0;
+        double geo = 0.0;
+        double real = 0.0;
+
         if (stops_.size() < 2) {
-            return result;
+            return std::make_pair(geo, real);
         }
 
         for (size_t i = 0; i < stops_.size() - 1; ++i) {
             auto stop1 = stops_[i];
             auto stop2 = stops_[i + 1];
-            result += geo::ComputeDistance(stop1->coods, stop2->coods);
+            geo += geo::ComputeDistance(stop1->coods, stop2->coods);
+            real += GetDistance(stops_[i], stops_[i + 1]);
         }
-        return result;
+        return std::make_pair(geo, real);
     }
 
     void TransportCatalogue::AddStop(const std::string& stop_name, geo::Coordinates coordinate)
@@ -71,10 +75,12 @@ namespace transport_catalogue
     {
         BusInfo result;
         auto bus = FindBus(bus_name);
+        auto lengths = CalculateGeoAndRealRouteLength(bus->stops);
         result.name = bus->name;
         result.numStops = bus->stops.size();
-        result.routeLength = CalculateRouteLength(bus->stops);
+        result.routeLength = lengths.second;
         result.numUniqueStops = CalculateUniqueStops(bus->stops);
+        result.curvature = result.routeLength / lengths.first;
         return result;
     }
 
@@ -105,6 +111,36 @@ namespace transport_catalogue
         {
             return {};
         }
+    }
+
+    int TransportCatalogue::GetDistance(const Stop* stop1, const Stop* stop2) const noexcept
+    {
+        int result = 0;
+        if (distances_.count({ stop1, stop2 }) != 0) {
+            result = distances_.at({ stop1, stop2 });
+            return result;
+        }
+        if (distances_.count({ stop2, stop1 }) != 0) {
+            result = distances_.at({ stop2, stop1 });
+            return result;
+        }
+
+        return result;
+    }
+    void TransportCatalogue::AddStopDistances(const std::string& stop_name, const std::unordered_map<std::string, int>& distances)
+    {
+        const Stop* stop = FindStop(stop_name);
+
+        {
+            for (const auto& [neighbour_name, distance] : distances) {
+                const Stop* neighbour_stop = FindStop(neighbour_name);
+                if (neighbour_stop)
+                {
+                    distances_[{stop, neighbour_stop}] = distance;
+                }
+            }
+        }
+
     }
 }
 

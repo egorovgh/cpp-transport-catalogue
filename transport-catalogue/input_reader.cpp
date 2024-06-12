@@ -3,6 +3,8 @@
 #include <algorithm> 
 #include <cassert> 
 #include <iterator> 
+#include <iostream>
+#include <cctype>  
 
 
 namespace transport_catalogue
@@ -44,19 +46,21 @@ namespace transport_catalogue
         /**
          * Разбивает строку string на n строк, с помощью указанного символа-разделителя delim
          */
-        std::vector<std::string_view> Split(std::string_view string, char delim) {
+        std::vector<std::string_view> Split(std::string_view string, std::string_view delim) {
             std::vector<std::string_view> result;
 
             size_t pos = 0;
-            while ((pos = string.find_first_not_of(' ', pos)) < string.length()) {
+            while (pos < string.size()) {
                 auto delim_pos = string.find(delim, pos);
                 if (delim_pos == string.npos) {
                     delim_pos = string.size();
                 }
-                if (auto substr = Trim(string.substr(pos, delim_pos - pos)); !substr.empty()) {
+                auto substr = string.substr(pos, delim_pos - pos);
+                substr = Trim(substr);
+                if (!substr.empty()) {
                     result.push_back(substr);
                 }
-                pos = delim_pos + 1;
+                pos = delim_pos + delim.size();
             }
 
             return result;
@@ -69,10 +73,10 @@ namespace transport_catalogue
          */
         std::vector<std::string_view> ParseRoute(std::string_view route) {
             if (route.find('>') != route.npos) {
-                return Split(route, '>');
+                return Split(route, ">");
             }
 
-            auto stops = Split(route, '-');
+            auto stops = Split(route, "-");
             std::vector<std::string_view> results(stops.begin(), stops.end());
             results.insert(results.end(), std::next(stops.rbegin()), stops.rend());
 
@@ -100,8 +104,9 @@ namespace transport_catalogue
                     std::string(line.substr(colon_pos + 1)) };
         }
 
-        void InputReader::ReadInput(std::istream& input, int base_request_count) {
-
+        void InputReader::ReadInput(std::istream& input) {
+            int base_request_count;
+            std::cin >> base_request_count >> std::ws;
 
             for (int i = 0; i < base_request_count; ++i) {
                 std::string line;
@@ -127,7 +132,21 @@ namespace transport_catalogue
                 }
 
                 if (command.command == "Stop") {
-                    catalogue.AddStop(command.id, ParseCoordinates(command.description));
+                    auto stop_info = ParseCoordinatesAndDistances(command.description);
+                    catalogue.AddStop(command.id, stop_info.first);
+                }           
+            }
+
+            for (const CommandDescription& command : commands_)
+            {
+                if (!command)
+                {
+                    return;
+                }
+
+                if (command.command == "Stop") {
+                    auto stop_info = ParseCoordinatesAndDistances(command.description);
+                    catalogue.AddStopDistances(command.id, stop_info.second);
                 }
             }
 
@@ -142,6 +161,31 @@ namespace transport_catalogue
                     catalogue.AddBus(command.id, ParseRoute(command.description));
                 }
             }
+        }
+        std::pair<geo::Coordinates, std::unordered_map<std::string, int>> InputReader::ParseCoordinatesAndDistances(const std::string& description) const
+        {
+            geo::Coordinates coordinates;
+            std::unordered_map<std::string, int> distances;
+
+            auto splitted_description = Split(description, ",");
+            coordinates.lat = std::stod((std::string)splitted_description[0]);
+            coordinates.lng = std::stod((std::string)splitted_description[1]);
+
+            if (splitted_description.size() == 2)
+            {
+                return { coordinates, distances };
+            }
+
+            for (size_t i = 2; i < splitted_description.size(); i++)
+            {
+                auto splitted_distance = Split(splitted_description[i], "m to ");
+                std::string stop = (std::string)splitted_distance[1];
+                int distance = std::stoi((std::string)splitted_distance[0]);
+                
+                distances.insert(std::make_pair(stop, distance));
+            }
+
+            return { coordinates, distances };
         }
     }
 }

@@ -42,8 +42,10 @@ namespace transport_catalogue {
             }
         }
 
-        void ReadAndProcessRequests(std::istream& input, int request_count, const TransportCatalogue& catalogue, std::ostream& output) {
-            for (int i = 0; i < request_count; ++i) {
+        void ReadAndProcessRequests(std::istream& input, const TransportCatalogue& catalogue, std::ostream& output) {
+            int stat_request_count;
+            std::cin >> stat_request_count >> std::ws;
+            for (int i = 0; i < stat_request_count; ++i) {
                 std::string line;
                 std::getline(input, line);
                 ParseAndPrintStat(catalogue, line, output);
@@ -60,7 +62,8 @@ namespace transport_catalogue {
             output << std::string(request) << ": "
                 << busInfo.numStops << " stops on route, "
                 << busInfo.numUniqueStops << " unique stops, "
-                << busInfo.routeLength << " route length"
+                << busInfo.routeLength << " route length, "
+                << busInfo.curvature << " curvature"
                 << std::endl;
         }
     }

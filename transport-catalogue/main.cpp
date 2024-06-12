@@ -10,12 +10,10 @@ int main() {
     transport_catalogue::TransportCatalogue catalogue;
 
     transport_catalogue::input_handler::InputReader reader;
-    int base_request_count;
-    cin >> base_request_count >> ws;
-    reader.ReadInput(cin, base_request_count);
+    
+    reader.ReadInput(cin);
     reader.ApplyCommands(catalogue);
 
-    int stat_request_count;
-    cin >> stat_request_count >> ws;
-    transport_catalogue::stat_reader::ReadAndProcessRequests(cin, stat_request_count, catalogue, cout);
+    
+    transport_catalogue::stat_reader::ReadAndProcessRequests(cin, catalogue, cout);
 }
