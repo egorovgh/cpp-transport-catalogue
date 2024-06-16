@@ -23,6 +23,12 @@ namespace transport_catalogue {
             std::string id;           // id маршрута или остановки
             std::string description;  // Параметры команды
         };
+        
+        struct StopCommandDescription
+        {
+            geo::Coordinates coods;
+            std::unordered_map<std::string, int> distances;
+        };
 
         class InputReader {
         public:
@@ -41,7 +47,7 @@ namespace transport_catalogue {
              */
             void ApplyCommands(TransportCatalogue& catalogue) const;
 
-            std::pair<geo::Coordinates, std::unordered_map<std::string, int>> ParseCoordinatesAndDistances(const std::string& description) const;
+            StopCommandDescription ParseCoordinatesAndDistances(const std::string& description) const;
 
         private:
             std::vector<CommandDescription> commands_;

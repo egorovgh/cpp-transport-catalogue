@@ -127,20 +127,16 @@ namespace transport_catalogue
 
         return result;
     }
-    void TransportCatalogue::AddStopDistances(const std::string& stop_name, const std::unordered_map<std::string, int>& distances)
+
+    void TransportCatalogue::AddStopDistance(const std::string& stop_from, const std::string& stop_to, const int& distance)
     {
-        const Stop* stop = FindStop(stop_name);
+        const Stop* stop_from_ = FindStop(stop_from);
+        const Stop* stop_to_ = FindStop(stop_to);
 
+        if (stop_from_ && stop_to_)
         {
-            for (const auto& [neighbour_name, distance] : distances) {
-                const Stop* neighbour_stop = FindStop(neighbour_name);
-                if (neighbour_stop)
-                {
-                    distances_[{stop, neighbour_stop}] = distance;
-                }
-            }
+            distances_[{stop_from_, stop_to_}] = distance;
         }
-
     }
 }
 

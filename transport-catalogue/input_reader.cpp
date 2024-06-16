@@ -133,7 +133,7 @@ namespace transport_catalogue
 
                 if (command.command == "Stop") {
                     auto stop_info = ParseCoordinatesAndDistances(command.description);
-                    catalogue.AddStop(command.id, stop_info.first);
+                    catalogue.AddStop(command.id, stop_info.coods);
                 }           
             }
 
@@ -146,7 +146,11 @@ namespace transport_catalogue
 
                 if (command.command == "Stop") {
                     auto stop_info = ParseCoordinatesAndDistances(command.description);
-                    catalogue.AddStopDistances(command.id, stop_info.second);
+
+                    for (const auto& distance : stop_info.distances)
+                    {
+                        catalogue.AddStopDistance(command.id, distance.first, distance.second);
+                    }
                 }
             }
 
@@ -162,18 +166,17 @@ namespace transport_catalogue
                 }
             }
         }
-        std::pair<geo::Coordinates, std::unordered_map<std::string, int>> InputReader::ParseCoordinatesAndDistances(const std::string& description) const
+        StopCommandDescription InputReader::ParseCoordinatesAndDistances(const std::string& description) const
         {
-            geo::Coordinates coordinates;
-            std::unordered_map<std::string, int> distances;
+            StopCommandDescription result;
 
             auto splitted_description = Split(description, ",");
-            coordinates.lat = std::stod((std::string)splitted_description[0]);
-            coordinates.lng = std::stod((std::string)splitted_description[1]);
+            result.coods.lat = std::stod((std::string)splitted_description[0]);
+            result.coods.lng = std::stod((std::string)splitted_description[1]);
 
             if (splitted_description.size() == 2)
             {
-                return { coordinates, distances };
+                return result;
             }
 
             for (size_t i = 2; i < splitted_description.size(); i++)
@@ -182,10 +185,10 @@ namespace transport_catalogue
                 std::string stop = (std::string)splitted_distance[1];
                 int distance = std::stoi((std::string)splitted_distance[0]);
                 
-                distances.insert(std::make_pair(stop, distance));
+                result.distances.insert(std::make_pair(stop, distance));
             }
 
-            return { coordinates, distances };
+            return result;
         }
     }
 }

@@ -40,7 +40,7 @@ namespace transport_catalogue
     public:
         void AddStop(const std::string& stop_name, geo::Coordinates coordinate);
         void AddBus(const std::string& route_name, const std::vector<std::string_view>& stops);
-        void AddStopDistances(const std::string& stop_name, const std::unordered_map<std::string, int>& distances);
+        void AddStopDistance(const std::string& stop_from, const std::string& stop_to, const int& distance);
         const BusInfo GetBusInfo(const std::string_view& bus_name) const;
         const Stop* FindStop(const std::string_view& stop_name) const noexcept;
         const Bus* FindBus(const std::string_view& bus_name) const noexcept;
