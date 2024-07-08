@@ -1,27 +1,43 @@
 #pragma once
 
-#include "json.h"
+#include <set>
+#include <optional>
+#include <string_view>
+
+
 #include "transport_catalogue.h"
+#include "domain.h"
 #include "map_renderer.h"
+#include "json_reader.h"
+#include "svg.h"
 
-#include <sstream>
+namespace request_handler
+{
+    class RequestHandler {
+        public:
+        // MapRenderer понадобится в следующей части итогового проекта
+        RequestHandler(const transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer, const json_reader::JsonReader reader);
 
-class RequestHandler {
-public:
-    RequestHandler(const transport::Catalogue& catalogue, const renderer::MapRenderer& renderer)
-        : catalogue_(catalogue)
-        , renderer_(renderer)
-    {
-    }
+        // Возвращает информацию о маршруте (запрос Bus)
+        std::optional<transport_catalogue::BusInfo> GetBusStat(const std::string_view& bus_name) const;
 
-    std::optional<transport::BusStat> GetBusStat(const std::string_view bus_number) const;
-    const std::set<std::string> GetBusesByStop(std::string_view stop_name) const;
-    bool IsBusNumber(const std::string_view bus_number) const;
-    bool IsStopName(const std::string_view stop_name) const;
+        // Возвращает маршруты, проходящие через
+        const std::set<std::string_view> GetBusesByStop(const std::string_view& stop_name) const;
+        
+        void PrintRequests() const;
 
-    svg::Document RenderMap() const;
+        // Этот метод будет нужен в следующей части итогового проекта
+        svg::Document RenderMap() const;
 
-private:
-    const transport::Catalogue& catalogue_;
-    const renderer::MapRenderer& renderer_;
-};
+        private:
+        const json::Node PrintBus(const json::Dict& bus_request) const;
+        const json::Node PrintStop(const json::Dict& stop_request) const;
+        const json::Node PrintMap(const json::Dict& map_request) const;
+        
+        private:
+        const transport_catalogue::TransportCatalogue& db_;
+        const renderer::MapRenderer& renderer_;
+        const json_reader::JsonReader reader_;
+    };
+}
+

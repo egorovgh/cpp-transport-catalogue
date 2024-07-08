@@ -1,36 +1,32 @@
 #pragma once
 
-#include "json.h"
-#include "transport_catalogue.h"
-#include "map_renderer.h"
-#include "request_handler.h"
-
 #include <iostream>
+#include "transport_catalogue.h"
+#include "json.h"
+#include "map_renderer.h"
+#include "transport_catalogue.h"
 
-class JsonReader {
-public:
-    JsonReader(std::istream& input)
-        : input_(json::Load(input))
-    {}
+namespace json_reader {
 
-    const json::Node& GetBaseRequests() const;
-    const json::Node& GetStatRequests() const;
-    const json::Node& GetRenderSettings() const;
+    class JsonReader {
+        public:
+        JsonReader(transport_catalogue::TransportCatalogue& tc, std::istream& input) :  transport_catalogue_(tc), document_(json::Load(input)) {}
 
-    void ProcessRequests(const json::Node& stat_requests, RequestHandler& rh) const;
+        void LoadDataToCatalogue();
+        const json::Node& GetBaseRequests() const;
+        const json::Node& GetStatRequests() const;
+        const json::Node& GetRenderSettings() const;
+        renderer::MapRenderer LoadRenderSettings(const json::Dict& request_map) const;
 
-    void FillCatalogue(transport::Catalogue& catalogue);
-    renderer::MapRenderer FillRenderSettings(const json::Dict& request_map) const;
+        private:
+        void LoadStop(const json::Dict& request_map);
+        void LoadBus(const json::Dict& request_map);
+        void LoadDistances();
+        
 
-    const json::Node PrintRoute(const json::Dict& request_map, RequestHandler& rh) const;
-    const json::Node PrintStop(const json::Dict& request_map, RequestHandler& rh) const;
-    const json::Node PrintMap(const json::Dict& request_map, RequestHandler& rh) const;
+        private:
+        transport_catalogue::TransportCatalogue& transport_catalogue_;
+        json::Document document_;
+    };
 
-private:
-    json::Document input_;
-    json::Node dummy_ = nullptr;
-
-    std::tuple<std::string_view, geo::Coordinates, std::map<std::string_view, int>> FillStop(const json::Dict& request_map) const;
-    void FillStopDistances(transport::Catalogue& catalogue) const;
-    std::tuple<std::string_view, std::vector<const transport::Stop*>, bool> FillRoute(const json::Dict& request_map, transport::Catalogue& catalogue) const;
-};
+}  // namespace json_reader
