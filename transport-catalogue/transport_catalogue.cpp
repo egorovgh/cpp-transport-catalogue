@@ -7,7 +7,7 @@
 
 namespace transport_catalogue
 {
-    void TransportCatalogue::AddBus(const std::string& route_name, const std::vector<std::string_view>& stops_, const bool& is_circle_)
+    void TransportCatalogue::AddBus(const std::string& route_name, const std::vector<std::string_view>& stops_, bool is_circle_)
     {
         Bus bus;
         bus.name = route_name;
@@ -40,24 +40,6 @@ namespace transport_catalogue
         return static_cast<int> (unique_stops.size());
     }
 
-    std::pair<double, double> TransportCatalogue::CalculateGeoAndRealRouteLength(const std::vector<const Stop*>& stops_) const
-    {
-        double geo = 0.0;
-        double real = 0.0;
-
-        if (stops_.size() < 2) {
-            return std::make_pair(geo, real);
-        }
-
-        for (size_t i = 0; i < stops_.size() - 1; ++i) {
-            auto stop1 = stops_[i];
-            auto stop2 = stops_[i + 1];
-            geo += geo::ComputeDistance(stop1->coods, stop2->coods);
-            real += GetDistance(stops_[i], stops_[i + 1]);
-        }
-        return std::make_pair(geo, real);
-    }
-
     void TransportCatalogue::AddStop(const std::string& stop_name, geo::Coordinates coordinate)
     {
         Stop stop;
@@ -76,12 +58,39 @@ namespace transport_catalogue
     {
         BusInfo result;
         auto bus = FindBus(bus_name);
-        auto lengths = CalculateGeoAndRealRouteLength(bus->stops);
+        if (bus -> is_circle)
+        {
+            result.numStops = bus->stops.size(); 
+        } else
+        {
+            result.numStops = bus->stops.size() * 2 - 1; 
+        }
+
         result.name = bus->name;
-        result.numStops = bus->stops.size();
-        result.routeLength = lengths.second;
         result.numUniqueStops = CalculateUniqueStops(bus->stops);
-        result.curvature = result.routeLength / lengths.first;
+
+        int routeLength = 0; 
+        double geographicLength = 0.0;
+
+        for (size_t i = 0; i < bus->stops.size() - 1; ++i) { 
+            auto from = bus->stops[i]; 
+            auto to = bus->stops[i + 1]; 
+
+            if (bus->is_circle) { 
+                routeLength += GetDistance(from, to); 
+                geographicLength += geo::ComputeDistance(from->coods, 
+                                                         to->coods); 
+            } 
+            else { 
+                routeLength += GetDistance(from, to) + GetDistance(to, from); 
+                geographicLength += geo::ComputeDistance(from->coods, 
+                                                         to->coods) * 2; 
+            }
+        } 
+
+
+        result.routeLength = routeLength; 
+        result.curvature = routeLength / geographicLength;
         return result;
     }
 
@@ -139,7 +148,7 @@ namespace transport_catalogue
             distances_[{stop_from_, stop_to_}] = distance;
         }
     }
-    
+
     const std::map<std::string_view, const Bus*> TransportCatalogue::GetSortedBuses() const {
         std::map<std::string_view, const Bus*> result;
         for (const auto& bus : buses_by_names_)

@@ -22,38 +22,7 @@ namespace request_handler
             throw std::invalid_argument("bus not found");
         }
 
-        result.name = bus_name;
-
-        if (bus->is_circle) 
-        {
-            result.numStops = bus->stops.size();
-        } else 
-        {
-            result.numStops = bus->stops.size() * 2 - 1;
-        }
-
-        int routeLength = 0;
-        double geographicLength = 0.0;
-
-        for (size_t i = 0; i < bus->stops.size() - 1; ++i) {
-            auto from = bus->stops[i];
-            auto to = bus->stops[i + 1];
-
-            if (bus->is_circle) {
-                routeLength += db_.GetDistance(from, to);
-                geographicLength += geo::ComputeDistance(from->coods,
-                                                         to->coods);
-            }
-            else {
-                routeLength += db_.GetDistance(from, to) + db_.GetDistance(to, from);
-                geographicLength += geo::ComputeDistance(from->coods,
-                                                         to->coods) * 2;
-            }
-        }
-        auto bus_temp = db_.FindBus(bus_name);
-        result.numUniqueStops = db_.CalculateUniqueStops(bus_temp -> stops);
-        result.routeLength = routeLength;
-        result.curvature = routeLength / geographicLength;
+        result = db_.GetBusInfo(bus_name);
 
         return result;
     }
