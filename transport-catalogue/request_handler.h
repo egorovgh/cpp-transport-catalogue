@@ -11,11 +11,11 @@
 #include "json_reader.h"
 #include "svg.h"
 
+
 namespace request_handler
 {
     class RequestHandler {
         public:
-        // MapRenderer понадобится в следующей части итогового проекта
         RequestHandler(const transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer, const json_reader::JsonReader reader);
 
         // Возвращает информацию о маршруте (запрос Bus)

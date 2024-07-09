@@ -1,5 +1,7 @@
 #include "request_handler.h"
 
+#include "json_builder.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -44,7 +46,7 @@ namespace request_handler
             if (type == "Bus") {
                 requests.emplace_back(PrintBus(request_map).AsMap());
             }
-            
+
             if (type == "Map") {
                 requests.emplace_back(PrintMap(request_map).AsMap());
             }
@@ -52,59 +54,70 @@ namespace request_handler
         json::Print(json::Document(requests), std::cout);
     }
 
-    const json::Node RequestHandler::PrintBus(const json::Dict& bus_request) const {
-        json::Dict result;
-        const std::string& bus_name = bus_request.at("name").AsString();
-        result["request_id"] = bus_request.at("id").AsInt();
-        if (!db_.FindBus(bus_name)) {
-            result["error_message"] = json::Node(std::string("not found"));
-            return json::Node(result);
-        } else {
-            auto busInfo = GetBusStat(bus_name);
-            result["stop_count"] = busInfo -> numStops;
-            result["route_length"] = busInfo -> routeLength;
-            result["unique_stop_count"] = busInfo -> numUniqueStops;
-            result["curvature"] = busInfo -> curvature;
-        }
-        return json::Node(result);
-    }
-
-    const json::Node RequestHandler::PrintStop(const json::Dict& stop_request) const {
-        json::Dict result;
-        const std::string& stop_name = stop_request.at("name").AsString();
-        result["request_id"] = stop_request.at("id").AsInt();
-
-        const auto stop = db_.FindStop(stop_name);
-        if (!stop) {
-            result["error_message"] = json::Node(std::string("not found")); 
-            return json::Node(result);
-        }
-
-        json::Array buses;
-        for (auto& bus : GetBusesByStop(stop_name)) {
-            buses.emplace_back((std::string)bus);
-        }
-        result["buses"] = buses;
-
-        return json::Node(result);
-    }
-    
     svg::Document RequestHandler::RenderMap() const 
     {
         auto sorted_buses = db_.GetSortedBuses();
         return renderer_.GetSVGDocument(sorted_buses);
     }
 
+    const json::Node RequestHandler::PrintBus(const json::Dict& bus_request) const {
+        auto result = json::Builder{};
+        result.StartDict();
+        const std::string& bus_name = bus_request.at("name").AsString();
+        const int id = bus_request.at("id").AsInt();
+        if (!db_.FindBus(bus_name)) {
+              result.Key("request_id").Value(id)
+                    .Key("error_message").Value((std::string)"not found");
+        } else {
+            auto busInfo = GetBusStat(bus_name);
+              result.Key("request_id").Value(id)
+                    .Key("stop_count").Value(busInfo -> numStops)
+                    .Key("route_length").Value(busInfo -> routeLength)
+                    .Key("unique_stop_count").Value(busInfo -> numUniqueStops)
+                    .Key("curvature").Value(busInfo -> curvature);
+        }
+        result.EndDict();
+        return result.Build();
+    }
+
+    const json::Node RequestHandler::PrintStop(const json::Dict& stop_request) const {
+        auto result = json::Builder{};
+        result.StartDict();
+        const std::string& stop_name = stop_request.at("name").AsString();
+        const int id = stop_request.at("id").AsInt();
+
+        const auto stop = db_.FindStop(stop_name);
+        if (!stop) {
+            result.Key("request_id").Value(id)
+                  .Key("error_message").Value((std::string)"not found");
+        } else
+        {
+            json::Array buses;
+            for (auto& bus : GetBusesByStop(stop_name)) {
+                buses.emplace_back((std::string)bus);
+            }
+            result.Key("request_id").Value(id)
+                  .Key("buses").Value(buses);
+        }
+        result.EndDict();
+        return result.Build();
+    }
+    
+
     const json::Node RequestHandler::PrintMap(const json::Dict& map_request) const
     {
-        json::Dict result;
-        result["request_id"] = map_request.at("id").AsInt();
         std::ostringstream strm;
         auto mapRequest = RenderMap();
         mapRequest.Render(strm);
-        result["map"] = strm.str();
+        const int id = map_request.at("id").AsInt();
+        
+        auto result = json::Builder{};
+        result.StartDict();
+        result.Key("request_id").Value(id)
+              .Key("map").Value(strm.str());
 
-        return json::Node(result);
+        result.EndDict();
+        return result.Build();
     }
 
 }
