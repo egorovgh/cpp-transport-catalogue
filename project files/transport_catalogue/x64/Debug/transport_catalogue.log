@@ -1,0 +1,12 @@
+﻿  input_reader.cpp
+c1xx : fatal  error C1083: Cannot open source file: '..\..\transport-catalogue\input_reader.cpp': No such file or directory
+  main.cpp
+D:\C++\Yandex\repo\cpp-transport-catalogue\transport-catalogue\geo.h(25,34): error C2065: 'M_PI': undeclared identifier
+D:\C++\Yandex\repo\cpp-transport-catalogue\transport-catalogue\geo.h(25,29): error C2737: 'dr': const object must be initialized
+  stat_reader.cpp
+c1xx : fatal  error C1083: Cannot open source file: '..\..\transport-catalogue\stat_reader.cpp': No such file or directory
+  transport_catalogue.cpp
+D:\C++\Yandex\repo\cpp-transport-catalogue\transport-catalogue\geo.h(25,34): error C2065: 'M_PI': undeclared identifier
+D:\C++\Yandex\repo\cpp-transport-catalogue\transport-catalogue\geo.h(25,29): error C2737: 'dr': const object must be initialized
+D:\C++\Yandex\repo\cpp-transport-catalogue\transport-catalogue\transport_catalogue.cpp(81,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
