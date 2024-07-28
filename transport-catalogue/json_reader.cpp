@@ -6,7 +6,7 @@
  */
 
 namespace json_reader {
-    void JsonReader::LoadDataToCatalogue() { 
+    void JsonReader::LoadDataToCatalogue() {
         const json::Array& arr = GetBaseRequests().AsArray();
         for (auto& request_stops : arr) {
             const auto& request_stops_map = request_stops.AsMap();
@@ -31,7 +31,7 @@ namespace json_reader {
     {
         if (!document_.GetRoot().AsMap().count("base_requests"))
         {
-            static json::Node nullNode(nullptr);  
+            static json::Node nullNode(nullptr);
             return nullNode;
         }
         return document_.GetRoot().AsMap().at("base_requests");
@@ -41,18 +41,26 @@ namespace json_reader {
     {
         if (!document_.GetRoot().AsMap().count("stat_requests"))
         {
-            static json::Node nullNode(nullptr);  
+            static json::Node nullNode(nullptr);
             return nullNode;
         }
         return document_.GetRoot().AsMap().at("stat_requests");
     }
 
     const json::Node& JsonReader::GetRenderSettings() const {
-        if (!document_.GetRoot().AsMap().count("render_settings")){
-            static json::Node nullNode(nullptr);  
+        if (!document_.GetRoot().AsMap().count("render_settings")) {
+            static json::Node nullNode(nullptr);
             return nullNode;
         }
         return document_.GetRoot().AsMap().at("render_settings");
+    }
+
+    const json::Node& JsonReader::GetRoutingSettings() const {
+        if (!document_.GetRoot().AsMap().count("routing_settings")) {
+            static json::Node nullNode(nullptr);
+            return nullNode;
+        }
+        return document_.GetRoot().AsMap().at("routing_settings");
     }
 
     void JsonReader::LoadStop(const json::Dict& request_map)
@@ -67,7 +75,7 @@ namespace json_reader {
         std::string_view bus_number = request_map.at("name").AsString();
         std::vector<std::string_view> stops;
         for (auto& stop : request_map.at("stops").AsArray()) {
-            stops.push_back(transport_catalogue_.FindStop(stop.AsString()) -> name);
+            stops.push_back(transport_catalogue_.FindStop(stop.AsString())->name);
         }
         bool is_circle = request_map.at("is_roundtrip").AsBool();
 
@@ -90,14 +98,14 @@ namespace json_reader {
                 }
                 for (auto& [to_name, dist] : stop_distances) {
                     auto to = transport_catalogue_.FindStop(to_name);
-                    transport_catalogue_.AddStopDistance(stop_temp -> name, to -> name, dist);
+                    transport_catalogue_.AddStopDistance(stop_temp->name, to->name, dist);
                 }
             }
         }
     }
 
 
-    renderer::MapRenderer JsonReader::LoadRenderSettings(const json::Dict& request_map) const {
+    renderer::MapRenderer JsonReader::LoadRenderSettings(const json::Node& request) const {
         /*struct RenderSettings {
         double width = 0.0;
         double height = 0.0;
@@ -112,6 +120,7 @@ namespace json_reader {
         double underlayer_width = 0.0;
         std::vector<svg::Color> color_palette {};
         */
+        json::Dict request_map = request.AsMap();
 
         renderer::RenderSettings render_settings;
         render_settings.width = request_map.at("width").AsDouble();
@@ -134,8 +143,10 @@ namespace json_reader {
             }
             else if (underlayer_color.size() == 4) {
                 render_settings.underlayer_color = svg::Rgba(underlayer_color[0].AsInt(), underlayer_color[1].AsInt(), underlayer_color[2].AsInt(), underlayer_color[3].AsDouble());
-            } else throw std::logic_error("wrong underlayer colortype");
-        } else throw std::logic_error("wrong underlayer color");
+            }
+            else throw std::logic_error("wrong underlayer colortype");
+        }
+        else throw std::logic_error("wrong underlayer color");
 
         render_settings.underlayer_width = request_map.at("underlayer_width").AsDouble();
 
@@ -149,10 +160,17 @@ namespace json_reader {
                 }
                 else if (color_type.size() == 4) {
                     render_settings.color_palette.emplace_back(svg::Rgba(color_type[0].AsInt(), color_type[1].AsInt(), color_type[2].AsInt(), color_type[3].AsDouble()));
-                } else throw std::logic_error("wrong color_palette type");
-            } else throw std::logic_error("wrong color_palette");
+                }
+                else throw std::logic_error("wrong color_palette type");
+            }
+            else throw std::logic_error("wrong color_palette");
         }
 
         return render_settings;
+    }
+
+
+    transport_catalogue::Router JsonReader::LoadRoutingSettings(const json::Node& routing_settings) const {
+        return transport_catalogue::Router{ routing_settings.AsMap().at("bus_wait_time").AsInt(), routing_settings.AsMap().at("bus_velocity").AsDouble() };
     }
 }

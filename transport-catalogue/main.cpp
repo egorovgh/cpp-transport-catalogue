@@ -15,13 +15,17 @@ int main() {
      */
     transport_catalogue::TransportCatalogue catalogue;
     json_reader::JsonReader reader(catalogue, std::cin);
-    
+
     reader.LoadDataToCatalogue();
-    
-    
-    const auto& render_settings = reader.GetRenderSettings().AsMap();
+
+
+    const auto& render_settings = reader.GetRenderSettings();
     const auto& renderer = reader.LoadRenderSettings(render_settings);
-    
-    request_handler::RequestHandler request_handler(catalogue, renderer, reader);
-    
+
+    const auto& routing_settings = reader.GetRoutingSettings();
+    const auto& router_settings = reader.LoadRoutingSettings(routing_settings);
+    const transport_catalogue::Router router = { router_settings, catalogue };
+
+    request_handler::RequestHandler request_handler(catalogue, renderer, reader, router);
+
 }

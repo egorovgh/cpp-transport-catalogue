@@ -108,51 +108,51 @@ namespace svg {
         out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"sv << std::endl;
         out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
         for (const auto& obj : objects_) {
-            obj->Render({out, 2, 2});
+            obj->Render({ out, 2, 2 });
         }
         out << "</svg>"sv;
     }
 
     std::string TagStrokeLineCap(StrokeLineCap line_cap) {
         std::string result;
-        switch(line_cap) {
-            case StrokeLineCap::BUTT:
-                result = "butt"s;
-                break;
-            case StrokeLineCap::ROUND:
-                result = "round"s;
-                break;
-            case StrokeLineCap::SQUARE:
-                result = "square"s;
-                break;
+        switch (line_cap) {
+        case StrokeLineCap::BUTT:
+            result = "butt"s;
+            break;
+        case StrokeLineCap::ROUND:
+            result = "round"s;
+            break;
+        case StrokeLineCap::SQUARE:
+            result = "square"s;
+            break;
         }
         return result;
     }
 
     std::string TagStrokeLineJoin(StrokeLineJoin line_join) {
         std::string result;
-        switch(line_join) {
-            case StrokeLineJoin::ARCS:
-                result = "arcs"s;
-                break;
-            case StrokeLineJoin::BEVEL:
-                result = "bevel"s;
-                break;
-            case StrokeLineJoin::MITER:
-                result = "miter"s;
-                break;
-            case StrokeLineJoin::MITER_CLIP:
-                result = "miter-clip"s;
-                break;
-            case StrokeLineJoin::ROUND:
-                result = "round"s;
-                break;
+        switch (line_join) {
+        case StrokeLineJoin::ARCS:
+            result = "arcs"s;
+            break;
+        case StrokeLineJoin::BEVEL:
+            result = "bevel"s;
+            break;
+        case StrokeLineJoin::MITER:
+            result = "miter"s;
+            break;
+        case StrokeLineJoin::MITER_CLIP:
+            result = "miter-clip"s;
+            break;
+        case StrokeLineJoin::ROUND:
+            result = "round"s;
+            break;
         }
         return result;
     }
 
-    std::ostream& operator<<(std::ostream &out, Color color) {
-        std::visit(OstreamColorPrinter{out}, color);
+    std::ostream& operator<<(std::ostream& out, Color color) {
+        std::visit(OstreamColorPrinter{ out }, color);
         return out;
     }
 

@@ -10,34 +10,41 @@
 #include "map_renderer.h"
 #include "json_reader.h"
 #include "svg.h"
+#include "transport_router.h"
 
 
 namespace request_handler
 {
     class RequestHandler {
-        public:
-        RequestHandler(const transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer, const json_reader::JsonReader reader);
+    public:
+        RequestHandler(const transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer, const json_reader::JsonReader reader, const transport_catalogue::Router& router)
+            : db_(db), renderer_(renderer), reader_(reader), router_(router)
+        {
+            PrintRequests();
+        }
 
         // Возвращает информацию о маршруте (запрос Bus)
         std::optional<transport_catalogue::BusInfo> GetBusStat(const std::string_view& bus_name) const;
 
         // Возвращает маршруты, проходящие через
         const std::set<std::string_view> GetBusesByStop(const std::string_view& stop_name) const;
-        
+
         void PrintRequests() const;
 
         // Этот метод будет нужен в следующей части итогового проекта
         svg::Document RenderMap() const;
 
-        private:
+    private:
         const json::Node PrintBus(const json::Dict& bus_request) const;
         const json::Node PrintStop(const json::Dict& stop_request) const;
         const json::Node PrintMap(const json::Dict& map_request) const;
-        
-        private:
+        const json::Node PrintRoute(const json::Dict& route_request) const;
+
+    private:
         const transport_catalogue::TransportCatalogue& db_;
         const renderer::MapRenderer& renderer_;
         const json_reader::JsonReader reader_;
+        const transport_catalogue::Router& router_;
     };
 }
 

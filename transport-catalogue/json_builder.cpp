@@ -5,7 +5,7 @@
 
 #include "json_builder.h"
 #include "json.h"
-namespace json{
+namespace json {
 	namespace detail {
 		ArrayItemContext KeyContext::StartArray() {
 			builder_->StartArray();
@@ -32,7 +32,7 @@ namespace json{
 
 		DictItemContext ArrayItemContext::StartDict() {
 			builder_->StartDict();
-			return DictItemContext(builder_);			
+			return DictItemContext(builder_);
 		}
 		ArrayItemContext ArrayItemContext::StartArray() {
 			builder_->StartArray();
@@ -51,10 +51,10 @@ namespace json{
 	bool Builder::CheckObjectCompleted() {
 		if (nodes_stack_.size() == 1) {
 			if (!(nodes_stack_.top().IsArray() &&
-				  nodes_stack_.top().AsArray().empty())) {
+				nodes_stack_.top().AsArray().empty())) {
 
-				if (!(nodes_stack_.top().AsMap().empty() && 
-						nodes_stack_.top().AsMap().empty())) {
+				if (!(nodes_stack_.top().AsMap().empty() &&
+					nodes_stack_.top().AsMap().empty())) {
 
 					return true;
 				}
@@ -82,7 +82,7 @@ namespace json{
 	}
 
 	detail::KeyContext Builder::Key(std::string key) {
-		if (double_key_check> depth_of_dicts|| last_key_is_empty_) {
+		if (double_key_check > depth_of_dicts || last_key_is_empty_) {
 			throw std::logic_error("key error");
 		}
 		else {
@@ -105,7 +105,7 @@ namespace json{
 			throw std::logic_error("the object is completed");
 		}
 
-		if (WrongValuePlace()){
+		if (WrongValuePlace()) {
 			throw std::logic_error("wrong value place");
 		}
 
@@ -132,9 +132,9 @@ namespace json{
 
 	detail::DictItemContext Builder::StartDict() {
 		++depth_of_dicts;
-		
+
 		StartObject(move(Dict()));
-		
+
 		return detail::DictItemContext(this);
 	}
 
@@ -144,7 +144,7 @@ namespace json{
 		return detail::ArrayItemContext(this);
 	}
 
-	Builder& Builder::EndDict() {		
+	Builder& Builder::EndDict() {
 		if (CheckObjectCompleted()) {
 			throw std::logic_error("the object is completed");
 		}
@@ -155,16 +155,16 @@ namespace json{
 		}
 		//закрываем новый словарь- уменьшаем глубину
 		--depth_of_dicts;
-		double_key_check= depth_of_dicts;
+		double_key_check = depth_of_dicts;
 
-		
+
 		Dict dict;
 		if (last_key_is_empty_) {
 			double_key_check = depth_of_dicts;
 			dict[key_.top()] = nullptr;
 			key_.pop();
 		}
-		while (!nodes_stack_.empty()) {			
+		while (!nodes_stack_.empty()) {
 			if (main_nodes_stack_.back() == &(nodes_stack_.top())) {
 				main_nodes_stack_.pop_back();
 				nodes_stack_.pop();
@@ -179,7 +179,7 @@ namespace json{
 	}
 
 	Builder& Builder::EndArray() {
-		
+
 		if (CheckObjectCompleted()) {
 			throw std::logic_error("the object is completed");
 		}
@@ -187,7 +187,7 @@ namespace json{
 		if (main_nodes_stack_.back()->IsMap()) {
 			throw std::logic_error("wrong end of array");
 			return *this;
-		}	
+		}
 		Array result;
 
 		while (!nodes_stack_.empty()) {
@@ -209,12 +209,12 @@ namespace json{
 		if (nodes_stack_.empty()) {
 			throw std::logic_error("the object is not finished");
 		}
-		else if (nodes_stack_.size()>1) {
+		else if (nodes_stack_.size() > 1) {
 			throw std::logic_error("incomplete array or dictionary");
 		}
 		else {
-			root_ = nodes_stack_.top();			
-		}	
-		return root_;	
+			root_ = nodes_stack_.top();
+		}
+		return root_;
 	}
 }

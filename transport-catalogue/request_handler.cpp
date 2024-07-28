@@ -7,17 +7,10 @@
 
 namespace request_handler
 {
-    RequestHandler::RequestHandler(const transport_catalogue::TransportCatalogue& db, const renderer::MapRenderer& renderer, const json_reader::JsonReader reader)
-        : db_(db), renderer_(renderer), reader_(reader)
-        {
-            PrintRequests();
-        }
-
-
     std::optional<transport_catalogue::BusInfo> RequestHandler::GetBusStat(const std::string_view& bus_name) const
     {
         transport_catalogue::BusInfo result;
-        const transport_catalogue::Bus* bus = db_.FindBus(bus_name);
+        auto bus = db_.FindBus(bus_name);
 
         if (!bus)
         {
@@ -43,6 +36,7 @@ namespace request_handler
             if (type == "Stop") {
                 requests.emplace_back(PrintStop(request_map).AsMap());
             }
+
             if (type == "Bus") {
                 requests.emplace_back(PrintBus(request_map).AsMap());
             }
@@ -50,11 +44,15 @@ namespace request_handler
             if (type == "Map") {
                 requests.emplace_back(PrintMap(request_map).AsMap());
             }
+
+            if (type == "Route") {
+                requests.emplace_back(PrintRoute(request_map).AsMap()); //TODO
+            }
         }
         json::Print(json::Document(requests), std::cout);
     }
 
-    svg::Document RequestHandler::RenderMap() const 
+    svg::Document RequestHandler::RenderMap() const
     {
         auto sorted_buses = db_.GetSortedBuses();
         return renderer_.GetSVGDocument(sorted_buses);
@@ -66,15 +64,16 @@ namespace request_handler
         const std::string& bus_name = bus_request.at("name").AsString();
         const int id = bus_request.at("id").AsInt();
         if (!db_.FindBus(bus_name)) {
-              result.Key("request_id").Value(id)
-                    .Key("error_message").Value((std::string)"not found");
-        } else {
+            result.Key("request_id").Value(id)
+                .Key("error_message").Value((std::string)"not found");
+        }
+        else {
             auto busInfo = GetBusStat(bus_name);
-              result.Key("request_id").Value(id)
-                    .Key("stop_count").Value(busInfo -> numStops)
-                    .Key("route_length").Value(busInfo -> routeLength)
-                    .Key("unique_stop_count").Value(busInfo -> numUniqueStops)
-                    .Key("curvature").Value(busInfo -> curvature);
+            result.Key("request_id").Value(id)
+                .Key("stop_count").Value(busInfo->numStops)
+                .Key("route_length").Value(busInfo->routeLength)
+                .Key("unique_stop_count").Value(busInfo->numUniqueStops)
+                .Key("curvature").Value(busInfo->curvature);
         }
         result.EndDict();
         return result.Build();
@@ -89,20 +88,21 @@ namespace request_handler
         const auto stop = db_.FindStop(stop_name);
         if (!stop) {
             result.Key("request_id").Value(id)
-                  .Key("error_message").Value((std::string)"not found");
-        } else
+                .Key("error_message").Value((std::string)"not found");
+        }
+        else
         {
             json::Array buses;
             for (auto& bus : GetBusesByStop(stop_name)) {
                 buses.emplace_back((std::string)bus);
             }
             result.Key("request_id").Value(id)
-                  .Key("buses").Value(buses);
+                .Key("buses").Value(buses);
         }
         result.EndDict();
         return result.Build();
     }
-    
+
 
     const json::Node RequestHandler::PrintMap(const json::Dict& map_request) const
     {
@@ -110,14 +110,72 @@ namespace request_handler
         auto mapRequest = RenderMap();
         mapRequest.Render(strm);
         const int id = map_request.at("id").AsInt();
-        
+
         auto result = json::Builder{};
         result.StartDict();
         result.Key("request_id").Value(id)
-              .Key("map").Value(strm.str());
+            .Key("map").Value(strm.str());
 
         result.EndDict();
         return result.Build();
+    }
+
+    const json::Node RequestHandler::PrintRoute(const json::Dict& route_request) const {
+        json::Node result;
+        const int id = route_request.at("id").AsInt();
+        const std::string_view stop_from = route_request.at("from").AsString();
+        const std::string_view stop_to = route_request.at("to").AsString();
+        const auto& routing = router_.FindRoute(stop_from, stop_to);
+
+        if (!routing) {
+            result = json::Builder{}
+                .StartDict()
+                .Key("request_id").Value(id)
+                .Key("error_message").Value((std::string)"not found")
+                .EndDict()
+                .Build();
+        }
+        else {
+            json::Array items;
+            double total_time = 0.0;
+            items.reserve(routing.value().edges.size());
+            for (auto& edge_id : routing.value().edges) {
+                const graph::Edge<double> edge = router_.GetGraph().GetEdge(edge_id);
+                if (edge.quality == 0) {
+                    items.emplace_back(json::Node(json::Builder{}
+                        .StartDict()
+                        .Key("stop_name").Value(edge.name)
+                        .Key("time").Value(edge.weight)
+                        .Key("type").Value((std::string)"Wait")
+                        .EndDict()
+                        .Build()));
+
+                    total_time += edge.weight;
+                }
+                else {
+                    items.emplace_back(json::Node(json::Builder{}
+                        .StartDict()
+                        .Key("bus").Value(edge.name)
+                        .Key("span_count").Value(static_cast<int>(edge.quality))
+                        .Key("time").Value(edge.weight)
+                        .Key("type").Value((std::string)"Bus")
+                        .EndDict()
+                        .Build()));
+
+                    total_time += edge.weight;
+                }
+            }
+
+            result = json::Builder{}
+                .StartDict()
+                .Key("request_id").Value(id)
+                .Key("total_time").Value(total_time)
+                .Key("items").Value(items)
+                .EndDict()
+                .Build();
+        }
+
+        return result;
     }
 
 }

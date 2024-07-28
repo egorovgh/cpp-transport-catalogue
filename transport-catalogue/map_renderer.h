@@ -18,12 +18,12 @@ namespace renderer {
     bool IsZero(double value);
 
     class SphereProjector {
-        public:
+    public:
         // points_begin и points_end задают начало и конец интервала элементов geo::Coordinates
         template <typename PointInputIt>
         SphereProjector(PointInputIt points_begin, PointInputIt points_end,
-                        double max_width, double max_height, double padding)
-        : padding_(padding) //
+            double max_width, double max_height, double padding)
+            : padding_(padding) //
         {
             // Если точки поверхности сферы не заданы, вычислять нечего
             if (points_begin == points_end) {
@@ -60,10 +60,12 @@ namespace renderer {
                 // Коэффициенты масштабирования по ширине и высоте ненулевые,
                 // берём минимальный из них
                 zoom_coeff_ = std::min(*width_zoom, *height_zoom);
-            } else if (width_zoom) {
+            }
+            else if (width_zoom) {
                 // Коэффициент масштабирования по ширине ненулевой, используем его
                 zoom_coeff_ = *width_zoom;
-            } else if (height_zoom) {
+            }
+            else if (height_zoom) {
                 // Коэффициент масштабирования по высоте ненулевой, используем его
                 zoom_coeff_ = *height_zoom;
             }
@@ -74,10 +76,10 @@ namespace renderer {
             return {
                 (coords.lng - min_lon_) * zoom_coeff_ + padding_,
                 (max_lat_ - coords.lat) * zoom_coeff_ + padding_
-                };
+            };
         }
 
-        private:
+    private:
         double padding_;
         double min_lon_ = 0;
         double max_lat_ = 0;
@@ -96,29 +98,29 @@ namespace renderer {
         svg::Point stop_label_offset = { 0.0, 0.0 };
         svg::Color underlayer_color = { svg::NoneColor };
         double underlayer_width = 0.0;
-        std::vector<svg::Color> color_palette {};
+        std::vector<svg::Color> color_palette{};
     };
 
     class MapRenderer
     {
-        public:
+    public:
         MapRenderer(const RenderSettings& render_settings)
             : render_settings_(render_settings)
-            {}
+        {}
 
         svg::Document GetSVGDocument(const std::map<std::string_view, const transport_catalogue::Bus*>& buses) const;
 
-        private:    
-        std::vector<svg::Polyline> GetBusPolylines(const std::map<std::string_view, const transport_catalogue::Bus*>& buses, 
-                                                   const SphereProjector& sphereProjector) const;
-        std::vector<svg::Text> GetBusNameText(const std::map<std::string_view, const transport_catalogue::Bus*>& buses, 
-                                              const SphereProjector& sphereProjector) const;
-        std::vector<svg::Circle> GetStopsCircle(const std::map<std::string_view, const transport_catalogue::Stop*>& stops, 
-                                                const SphereProjector& sphereProjector) const;
-        std::vector<svg::Text> GetStopNamesText(const std::map<std::string_view, const transport_catalogue::Stop*>& stops, 
-                                                const SphereProjector& sphereProjector) const;
-            
-        private:    
+    private:
+        std::vector<svg::Polyline> GetBusPolylines(const std::map<std::string_view, const transport_catalogue::Bus*>& buses,
+            const SphereProjector& sphereProjector) const;
+        std::vector<svg::Text> GetBusNameText(const std::map<std::string_view, const transport_catalogue::Bus*>& buses,
+            const SphereProjector& sphereProjector) const;
+        std::vector<svg::Circle> GetStopsCircle(const std::map<std::string_view, const transport_catalogue::Stop*>& stops,
+            const SphereProjector& sphereProjector) const;
+        std::vector<svg::Text> GetStopNamesText(const std::map<std::string_view, const transport_catalogue::Stop*>& stops,
+            const SphereProjector& sphereProjector) const;
+
+    private:
         const RenderSettings render_settings_;
     };
 }

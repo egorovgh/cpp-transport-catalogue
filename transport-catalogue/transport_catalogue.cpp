@@ -58,38 +58,39 @@ namespace transport_catalogue
     {
         BusInfo result;
         auto bus = FindBus(bus_name);
-        if (bus -> is_circle)
+        if (bus->is_circle)
         {
-            result.numStops = bus->stops.size(); 
-        } else
+            result.numStops = bus->stops.size();
+        }
+        else
         {
-            result.numStops = bus->stops.size() * 2 - 1; 
+            result.numStops = bus->stops.size() * 2 - 1;
         }
 
         result.name = bus->name;
         result.numUniqueStops = CalculateUniqueStops(bus->stops);
 
-        int routeLength = 0; 
+        int routeLength = 0;
         double geographicLength = 0.0;
 
-        for (size_t i = 0; i < bus->stops.size() - 1; ++i) { 
-            auto from = bus->stops[i]; 
-            auto to = bus->stops[i + 1]; 
+        for (size_t i = 0; i < bus->stops.size() - 1; ++i) {
+            auto from = bus->stops[i];
+            auto to = bus->stops[i + 1];
 
-            if (bus->is_circle) { 
-                routeLength += GetDistance(from, to); 
-                geographicLength += geo::ComputeDistance(from->coods, 
-                                                         to->coods); 
-            } 
-            else { 
-                routeLength += GetDistance(from, to) + GetDistance(to, from); 
-                geographicLength += geo::ComputeDistance(from->coods, 
-                                                         to->coods) * 2; 
+            if (bus->is_circle) {
+                routeLength += GetDistance(from, to);
+                geographicLength += geo::ComputeDistance(from->coods,
+                    to->coods);
             }
-        } 
+            else {
+                routeLength += GetDistance(from, to) + GetDistance(to, from);
+                geographicLength += geo::ComputeDistance(from->coods,
+                    to->coods) * 2;
+            }
+        }
 
 
-        result.routeLength = routeLength; 
+        result.routeLength = routeLength;
         result.curvature = routeLength / geographicLength;
         return result;
     }
@@ -154,6 +155,15 @@ namespace transport_catalogue
         for (const auto& bus : buses_by_names_)
         {
             result.insert(bus);
+        }
+        return result;
+    }
+    const std::map<std::string_view, const Stop*> TransportCatalogue::GetSortedStops() const
+    {
+        std::map<std::string_view, const Stop*> result;
+        for (const auto& stop : stops_by_name_)
+        {
+            result.insert(stop);
         }
         return result;
     }

@@ -24,14 +24,14 @@ namespace json {
 
         class DictItemContext {
         public:
-            DictItemContext(Builder* builder):builder_(builder){
+            DictItemContext(Builder* builder) :builder_(builder) {
             }
             detail::KeyContext Key(std::string key);
             Builder& EndDict();
         protected:
             Builder* builder_;
         };
-        
+
         class ArrayItemContext {
         public:
             ArrayItemContext(Builder* builder) :builder_(builder) {
@@ -56,15 +56,15 @@ namespace json {
         Node Build();
 
     private:
-        std::stack <std::string> key_; 
-        bool begin_arr_=false;
+        std::stack <std::string> key_;
+        bool begin_arr_ = false;
         bool begin_daict_ = false;
         Node root_;
         std::stack<Node> nodes_stack_;
         std::vector<Node*> main_nodes_stack_;
 
         void StartObject(const Node&&);
-        
+
         int depth_of_dicts = 0;//текущее количество вложенных словарей
         int double_key_check = 0;//количество открытых ключей без значения
         bool last_key_is_empty_ = false;//содержит ли последний ключ значение

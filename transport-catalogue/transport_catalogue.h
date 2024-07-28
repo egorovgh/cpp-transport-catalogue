@@ -13,7 +13,7 @@
 
 namespace transport_catalogue
 {
-    
+
 
     struct StopPairHasher {
         size_t operator()(const std::pair<const Stop*, const Stop*>& pair) const {
@@ -33,6 +33,7 @@ namespace transport_catalogue
         const std::set<std::string_view> GetBusesOnStop(const Stop& stop) const;
         int GetDistance(const Stop* stop1, const Stop* stop2) const noexcept;
         const std::map<std::string_view, const Bus*> GetSortedBuses() const;
+        const std::map<std::string_view, const Stop*> GetSortedStops() const;
 
     private:
         void AddStop(Stop&& stop) noexcept;
